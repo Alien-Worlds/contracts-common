@@ -110,6 +110,12 @@ namespace safemath
         }
 
         /**
+         *  ++ operator
+         *
+         */
+        constexpr void operator++(int) { *this += S<T>{1}; }
+
+        /**
          * Subtraction assignment operator
          */
         constexpr S &operator-=(const S a)
