@@ -90,6 +90,12 @@ namespace safemath
             return S<U>{u};
         }
 
+        /* Lossy downcast */
+        template <typename U>
+        constexpr S<U> lossy() const {
+            return S<U>{narrow_cast<U>(n)};
+        }
+
         /**
          * Unary minus operator
          *
@@ -304,7 +310,6 @@ namespace safemath
                 }
                 r *= y;
             }
-
             return r;
         }
 
