@@ -32,13 +32,21 @@ namespace safemath {
             static_assert(std::is_unsigned_v<T> || std::is_signed_v<T>, "wrong type, only for numbers");
         };
 
-        constexpr T value() const { return n; }
+        constexpr T value() const {
+            return n;
+        }
 
-        constexpr operator T() const { return value(); }
+        constexpr operator T() const {
+            return value();
+        }
 
-        static constexpr T min() { return std::numeric_limits<T>::min(); }
+        static constexpr T min() {
+            return std::numeric_limits<T>::min();
+        }
 
-        static constexpr T max() { return std::numeric_limits<T>::max(); }
+        static constexpr T max() {
+            return std::numeric_limits<T>::max();
+        }
 
         std::string to_string() const {
             if constexpr (std::is_same_v<T, int128_t>) {
@@ -87,7 +95,9 @@ namespace safemath {
          *  ++ operator
          *
          */
-        constexpr void operator++(int) { *this += S<T>{1}; }
+        constexpr void operator++(int) {
+            *this += S<T>{1};
+        }
 
         /**
          * Subtraction assignment operator
@@ -260,91 +270,127 @@ namespace safemath {
         /**
          * Equality operator
          */
-        constexpr friend bool operator==(const S &a, const S &b) { return a.n == b.n; }
+        constexpr friend bool operator==(const S &a, const S &b) {
+            return a.n == b.n;
+        }
 
         /**
          * Equality operator with anything that has a == operator
          */
-        constexpr friend bool operator==(const S &a, const T b) { return a.n == b; }
+        constexpr friend bool operator==(const S &a, const T b) {
+            return a.n == b;
+        }
 
         /**
          * Equality operator with anything that has a == operator
          */
-        constexpr friend bool operator==(const T b, const S &a) { return a.n == b; }
+        constexpr friend bool operator==(const T b, const S &a) {
+            return a.n == b;
+        }
 
         /**
          * Inequality operator
          */
-        constexpr friend bool operator!=(const S &a, const S &b) { return !(a == b); }
+        constexpr friend bool operator!=(const S &a, const S &b) {
+            return !(a == b);
+        }
 
         /**
          * Inequality operator
          */
-        constexpr friend bool operator!=(const S &a, const T b) { return !(a == b); }
+        constexpr friend bool operator!=(const S &a, const T b) {
+            return !(a.n == b);
+        }
 
         /**
          * Inequality operator
          */
-        constexpr friend bool operator!=(const T b, const S &a) { return !(a == b); }
+        constexpr friend bool operator!=(const T b, const S &a) {
+            return !(a.n == b);
+        }
 
         /**
          * Less than operator
          */
-        constexpr friend bool operator<(const S &a, const S &b) { return a.n < b.n; }
+        constexpr friend bool operator<(const S &a, const S &b) {
+            return a.n < b.n;
+        }
 
         /**
          * Less than operator
          */
-        constexpr friend bool operator<(const S &a, const T b) { return a.n < b; }
+        constexpr friend bool operator<(const S &a, const T b) {
+            return a.n < b;
+        }
 
         /**
          * Less than operator
          */
-        constexpr friend bool operator<(const T b, const S &a) { return a.n < b; }
+        constexpr friend bool operator<(const T b, const S &a) {
+            return b < a.n;
+        }
 
         /**
          * Less or equal to operator
          */
-        constexpr friend bool operator<=(const S &a, const S &b) { return a.n <= b.n; }
+        constexpr friend bool operator<=(const S &a, const S &b) {
+            return a.n <= b.n;
+        }
 
         /**
          * Less or equal to operator
          */
-        constexpr friend bool operator<=(const S &a, const T b) { return a.n <= b; }
+        constexpr friend bool operator<=(const S &a, const T b) {
+            return a.n <= b;
+        }
 
         /**
          * Less or equal to operator
          */
-        constexpr friend bool operator<=(const T b, const S &a) { return a.n <= b; }
+        constexpr friend bool operator<=(const T b, const S &a) {
+            return b <= a.n;
+        }
 
         /**
          * Greater than operator
          */
-        constexpr friend bool operator>(const S &a, const S &b) { return a.n > b.n; }
+        constexpr friend bool operator>(const S &a, const S &b) {
+            return a.n > b.n;
+        }
 
         /**
          * Greater than operator
          */
-        constexpr friend bool operator>(const S &a, const T b) { return a.n > b; }
+        constexpr friend bool operator>(const S &a, const T b) {
+            return a.n > b;
+        }
         /**
          * Greater than operator
          */
-        constexpr friend bool operator>(const T b, const S &a) { return a.n > b; }
+        constexpr friend bool operator>(const T b, const S &a) {
+            return b > a.n;
+        }
 
         /**
          * Greater or equal to operator
          */
-        constexpr friend bool operator>=(const S &a, const S &b) { return a.n >= b; }
+        constexpr friend bool operator>=(const S &a, const S &b) {
+            return a.n >= b.n;
+        }
 
         /**
          * Greater or equal to operator
          */
-        constexpr friend bool operator>=(const S &a, const T b) { return a.n >= b; }
+        constexpr friend bool operator>=(const S &a, const T b) {
+            return a.n >= b;
+        }
 
         /**
          * Greater or equal to operator
          */
-        constexpr friend bool operator>=(const T b, const S &a) { return a.n >= b; }
+        constexpr friend bool operator>=(const T b, const S &a) {
+            return b >= a.n;
+        }
     };
 
 } // namespace safemath
