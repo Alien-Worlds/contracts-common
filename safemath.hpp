@@ -88,6 +88,24 @@ class S {
         return S<U>{narrow_cast<U>(n)};
     }
 
+    template <typename U>
+    constexpr S<T> add_signed_to_unsigned(S<U> b) const {
+        static_assert(std::is_unsigned_v<T>, "add_signed_to_unsigned is only for unsigned");
+        static_assert(std::is_signed_v<U>, "add_signed_to_unsigned: Argument must be signed");
+        auto r = *this;
+        if (b > U{}) {
+            r += b.template to<T>();
+        } else {
+            r -= b.abs().template to<T>();
+        }
+        return r;
+    }
+
+    template <typename U>
+    constexpr S<T> add_signed_to_unsigned(U b) const {
+        return add_signed_to_unsigned(S<U>{b});
+    }
+
     /**
      * Unary minus operator
      *
@@ -234,7 +252,7 @@ class S {
      * Checked abs function. Contrary to the abs function from math.h, this will
      * also work with int128_t data types.
      */
-    constexpr S<T> abs() {
+    constexpr S<T> abs() const {
         S r = *this;
         if (n < T{}) {
             r = -r;
