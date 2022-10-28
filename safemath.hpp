@@ -46,6 +46,14 @@ class S {
             eosio::check(pred, msg);
     }
 
+    template <typename... Args>
+    static constexpr void check(const bool pred, const std::string_view format, Args const &...args) {
+        if (!pred) {
+            const auto msg = fmt(format, args...);
+            eosio::check(pred, msg);
+        }
+    }
+
     std::string to_string() const {
         if constexpr (std::is_same_v<T, int128_t>) {
             return std::to_string(to<int64_t>());
@@ -56,36 +64,80 @@ class S {
         }
     }
 
+    template <class>
+    static constexpr bool dependent_false_v = false;
+
+    template <typename U>
+    static std::string type_name() {
+        if constexpr (std::is_same_v<std::decay_t<U>, uint128_t>) {
+            return "uint128_t";
+        } else if constexpr (std::is_same_v<std::decay_t<U>, uint64_t>) {
+            return "uint64_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, uint32_t>) {
+            return "uint32_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, uint16_t>) {
+            return "uint16_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, uint8_t>) {
+            return "uint8_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, int128_t>) {
+            return "int128_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, int64_t>) {
+            return "int64_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, int32_t>) {
+            return "int32_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, int16_t>) {
+            return "int16_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, int8_t>) {
+            return "int8_t";
+
+        } else if constexpr (std::is_same_v<std::decay_t<U>, double>) {
+            return "double";
+
+        } else {
+            static_assert(dependent_false_v<T>, "Unknown type, cannot get type_name");
+        }
+    }
+
     // a checked version of narrow_cast() that throws if the cast changed the value
     // Adapted from: https://github.com/microsoft/GSL/blob/main/include/gsl/narrow (MIT licensed)
     template <typename U, typename std::enable_if<std::is_arithmetic<U>::value>::type * = nullptr>
     constexpr S<U> to() const {
-        // static_assert(!std::is_floating_point_v<T> || !std::is_integral_v<U>,
-        // "Conversion from floating point to integral is not lossless");
         constexpr const auto is_conversion_from_float_to_int = std::is_floating_point_v<T> && std::is_integral_v<U>;
+        constexpr const auto is_conversion_from_int_to_float = std::is_integral_v<T> && std::is_floating_point_v<U>;
         constexpr const auto is_different_signedness         = (std::is_signed<U>::value != std::is_signed<T>::value);
 
         const auto u = narrow_cast<U>(n);
 
         if constexpr (is_conversion_from_float_to_int) {
-            // if we are converting to int, we accept a rounding error of up to 1
-            check(n - static_cast<T>(u) <= T{1}, "Invalid narrow cast while converting from float to int");
+            // conversion from float to int is UB if the float is out of range (no wraparound/overflow)
+            const auto max_representable_int = static_cast<T>(std::numeric_limits<U>::max());
+            if (n > 0) {
+                check(n <= max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
+            } else {
+                check(n >= -max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
+            }
+            check(n - static_cast<T>(u) <= T{1}, "Invalid narrow cast while converting from float to int ");
+        } else if constexpr (is_conversion_from_int_to_float) {
+            // the biggest uint128_t is not outside of the range of floats, so no range check necessary
+            // for very big integers, we lose some accuracy but that's acceptable (no need to check either)
         } else {
             // if we are converting between different integer types, the result must be exact
             check(n - static_cast<T>(u) == T{}, "Invalid narrow cast");
         }
 
-        if (is_different_signedness) {
+        if constexpr (is_different_signedness) {
             check(u < U{} == n < T{}, "Invalid narrow cast");
         }
 
         return S<U>{u};
-    }
-
-    /* Lossy downcast */
-    template <typename U>
-    constexpr S<U> lossy() const {
-        return S<U>{narrow_cast<U>(n)};
     }
 
     template <typename U>
