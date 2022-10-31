@@ -1,5 +1,6 @@
 #pragma once
 
+#include "serr.hpp"
 #include <eosio/eosio.hpp>
 #include <math.h>
 
@@ -39,19 +40,6 @@ class S {
 
     static constexpr T max() {
         return std::numeric_limits<T>::max();
-    }
-
-    static constexpr void check(bool pred, std::string_view msg) {
-        if (!pred)
-            eosio::check(pred, msg);
-    }
-
-    template <typename... Args>
-    static constexpr void check(const bool pred, const std::string_view format, Args const &...args) {
-        if (!pred) {
-            const auto msg = fmt(format, args...);
-            eosio::check(pred, msg);
-        }
     }
 
     std::string to_string() const {
@@ -120,21 +108,21 @@ class S {
             // conversion from float to int is UB if the float is out of range (no wraparound/overflow)
             const auto max_representable_int = static_cast<T>(std::numeric_limits<U>::max());
             if (n > 0) {
-                check(n <= max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
+                ::check(n <= max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
             } else {
-                check(n >= -max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
+                ::check(n >= -max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
             }
-            check(n - static_cast<T>(u) <= T{1}, "Invalid narrow cast while converting from float to int ");
+            ::check(n - static_cast<T>(u) <= T{1}, "Invalid narrow cast while converting from float to int");
         } else if constexpr (is_conversion_from_int_to_float) {
             // the biggest uint128_t is not outside of the range of floats, so no range check necessary
             // for very big integers, we lose some accuracy but that's acceptable (no need to check either)
         } else {
             // if we are converting between different integer types, the result must be exact
-            check(n - static_cast<T>(u) == T{}, "Invalid narrow cast");
+            ::check(n - static_cast<T>(u) == T{}, "Invalid narrow cast");
         }
 
         if constexpr (is_different_signedness) {
-            check(u < U{} == n < T{}, "Invalid narrow cast");
+            ::check(u < U{} == n < T{}, "Invalid narrow cast with different signedness");
         }
 
         return S<U>{u};
@@ -165,7 +153,7 @@ class S {
     constexpr S operator-() const {
         static_assert(std::is_signed_v<T>, "operator-() works only on signed");
         auto r = *this;
-        check(n != min(), "overflow");
+        ::check(n != min(), "overflow");
         r.n = -r.n;
         return r;
     }
@@ -184,14 +172,14 @@ class S {
     constexpr S &operator-=(const S a) {
         if constexpr (std::is_floating_point_v<T>) {
             n -= a.n;
-            check(!isinf(n), "infinity");
-            check(!isnan(n), "NaN");
+            ::check(!isinf(n), "infinity");
+            ::check(!isnan(n), "NaN");
         } else if constexpr (std::is_unsigned_v<T>) {
-            check(n >= a.n, "invalid unsigned subtraction: result would be negative");
+            ::check(n >= a.n, "invalid unsigned subtraction: result would be negative");
             n -= a.n;
         } else {
-            check(a.n <= 0 || n >= min() + a.n, "signed subtraction underflow");
-            check(a.n >= 0 || n <= max() + a.n, "signed subtraction overflow");
+            ::check(a.n <= 0 || n >= min() + a.n, "signed subtraction underflow");
+            ::check(a.n >= 0 || n <= max() + a.n, "signed subtraction overflow");
             n -= a.n;
         }
         return *this;
@@ -203,14 +191,14 @@ class S {
     constexpr S &operator+=(const S &a) {
         if constexpr (std::is_floating_point_v<T>) {
             n += a.n;
-            check(!isinf(n), "infinity");
-            check(!isnan(n), "NaN");
+            ::check(!isinf(n), "infinity");
+            ::check(!isnan(n), "NaN");
         } else if constexpr (std::is_unsigned_v<T>) {
-            check(max() - n >= a.n, "unsigned wrap");
+            ::check(max() - n >= a.n, "unsigned wrap");
             n += a.n;
         } else {
-            check(a.n <= 0 || n <= max() - a.n, "signed addition overflow");
-            check(a.n >= 0 || n >= min() - a.n, "signed addition underflow");
+            ::check(a.n <= 0 || n <= max() - a.n, "signed addition overflow");
+            ::check(a.n >= 0 || n >= min() - a.n, "signed addition underflow");
             n += a.n;
         }
         return *this;
@@ -244,23 +232,23 @@ class S {
     constexpr S &operator*=(const S &a) {
         if constexpr (std::is_floating_point_v<T>) {
             n *= a.n;
-            check(!isinf(n), "infinity");
-            check(!isnan(n), "NaN");
+            ::check(!isinf(n), "infinity");
+            ::check(!isnan(n), "NaN");
         } else if constexpr (std::is_unsigned_v<T>) {
-            check(n <= max() / a.n, "unsigned multiplication overflow");
+            ::check(n <= max() / a.n, "unsigned multiplication overflow");
             n *= a.n;
         } else {
             if (n > 0) {
                 if (a.n > 0) {
-                    check(n <= max() / a.n, "signed multiplication overflow");
+                    ::check(n <= max() / a.n, "signed multiplication overflow");
                 } else {
-                    check(a.n >= min() / n, "signed multiplication underflow");
+                    ::check(a.n >= min() / n, "signed multiplication underflow");
                 }
             } else {
                 if (a.n > 0) {
-                    check(n >= min() / a.n, "signed multiplication underflow");
+                    ::check(n >= min() / a.n, "signed multiplication underflow");
                 } else {
-                    check(n == 0 || a.n >= max() / n, "signed multiplication overflow");
+                    ::check(n == 0 || a.n >= max() / n, "signed multiplication overflow");
                 }
             }
             n *= a.n;
@@ -283,8 +271,8 @@ class S {
      * Division assignment operator
      */
     constexpr S &operator/=(const S &a) {
-        check(a.n != 0, "division by zero");
-        check(!(n == min() && a.n == -1), "division overflow");
+        ::check(a.n != 0, "division by zero");
+        ::check(!(n == min() && a.n == -1), "division overflow");
         n /= a.n;
         return *this;
     }
@@ -319,7 +307,7 @@ class S {
     constexpr S ipow(U x) {
         static_assert(std::is_same_v<T, U>, "Types don't match");
         static_assert(std::is_integral_v<T>, "wrong type, pow is only for integers");
-        check(x >= 0, "pow: exponent must be non-negative");
+        ::check(x >= 0, "pow: exponent must be non-negative");
         S r = *this;
         if (x == 0) {
             r.n = 1;
