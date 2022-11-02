@@ -97,8 +97,11 @@ class S {
 
     // a checked version of narrow_cast() that throws if the cast changed the value
     // Adapted from: https://github.com/microsoft/GSL/blob/main/include/gsl/narrow (MIT licensed)
-    template <typename U, typename std::enable_if<std::is_arithmetic<U>::value>::type * = nullptr>
-    constexpr S<U> to() const {
+    template <typename U>
+    constexpr S<U> to(const std::string_view msg = "") const {
+        if (msg.length()) {
+            SErr::set(msg);
+        }
         constexpr const auto is_conversion_from_float_to_int = std::is_floating_point_v<T> && std::is_integral_v<U>;
         constexpr const auto is_conversion_from_int_to_float = std::is_integral_v<T> && std::is_floating_point_v<U>;
         constexpr const auto is_different_signedness         = (std::is_signed<U>::value != std::is_signed<T>::value);
@@ -109,23 +112,29 @@ class S {
             // conversion from float to int is UB if the float is out of range (no wraparound/overflow)
             const auto max_representable_int = static_cast<T>(std::numeric_limits<U>::max());
             if (n > 0) {
-                ::check(n <= max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
+                ::check(n <= max_representable_int, "Float %s is too big for %s", *this, type_name<U>());
             } else {
-                ::check(n >= -max_representable_int, "Float %s is too big for %s", std::to_string(n), type_name<U>());
+                ::check(n >= -max_representable_int, "Float %s is too big for %s", *this, type_name<U>());
             }
-            ::check(n - static_cast<T>(u) <= T{1}, "Invalid narrow cast while converting from float to int");
+            ::check(n - static_cast<T>(u) <= T{1}, "Invalid narrow cast while converting %s from %s to %s", *this,
+                type_name<T>(), type_name<U>());
         } else if constexpr (is_conversion_from_int_to_float) {
             // the biggest uint128_t is not outside of the range of floats, so no range check necessary
             // for very big integers, we lose some accuracy but that's acceptable (no need to check either)
         } else {
             // if we are converting between different integer types, the result must be exact
-            ::check(n - static_cast<T>(u) == T{}, "Invalid narrow cast");
+            ::check(n - static_cast<T>(u) == T{}, "Invalid narrow cast while converting %s from %s to %s", *this,
+                type_name<T>(), type_name<U>());
         }
 
         if constexpr (is_different_signedness) {
-            ::check(u < U{} == n < T{}, "Invalid narrow cast with different signedness");
+            ::check(u < U{} == n < T{},
+                "Invalid narrow cast with different signedness while converting %s from %s to %s", *this,
+                type_name<T>(), type_name<U>());
         }
-
+        if (msg.length()) {
+            SErr::set("");
+        }
         return S<U>{u};
     }
 
