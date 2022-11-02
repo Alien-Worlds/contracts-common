@@ -139,21 +139,21 @@ class S {
     }
 
     template <typename U>
-    constexpr S<T> add_signed_to_unsigned(S<U> b) const {
+    constexpr S<T> add_signed_to_unsigned(S<U> b, const std::string_view msg = "") const {
         static_assert(std::is_unsigned_v<T>, "add_signed_to_unsigned is only for unsigned");
         static_assert(std::is_signed_v<U>, "add_signed_to_unsigned: Argument must be signed");
         auto r = *this;
         if (b > U{}) {
-            r += b.template to<T>();
+            r += b.template to<T>(msg);
         } else {
-            r -= b.abs().template to<T>();
+            r -= b.abs().template to<T>(msg);
         }
         return r;
     }
 
     template <typename U>
-    constexpr S<T> add_signed_to_unsigned(U b) const {
-        return add_signed_to_unsigned(S<U>{b});
+    constexpr S<T> add_signed_to_unsigned(U b, const std::string_view msg = "") const {
+        return add_signed_to_unsigned(S<U>{b}, msg);
     }
 
     /**
