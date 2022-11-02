@@ -1,6 +1,7 @@
 #pragma once
 
 #include "serr.hpp"
+#include "util.hpp"
 #include <eosio/eosio.hpp>
 #include <math.h>
 
