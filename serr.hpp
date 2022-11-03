@@ -37,3 +37,15 @@ class SErr {
   private:
     std::optional<std::function<std::string()>> lambda;
 };
+
+class Err {
+  public:
+    template <typename... Args>
+    Err(const std::string_view format, Args const &...args) {
+        SErr::set(format, args...);
+    }
+
+    ~Err() {
+        SErr::set("");
+    }
+};
