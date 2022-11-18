@@ -62,34 +62,26 @@ class S {
             return "uint128_t";
         } else if constexpr (std::is_same_v<std::decay_t<U>, uint64_t>) {
             return "uint64_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, uint32_t>) {
             return "uint32_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, uint16_t>) {
             return "uint16_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, uint8_t>) {
             return "uint8_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, int128_t>) {
             return "int128_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, int64_t>) {
             return "int64_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, int32_t>) {
             return "int32_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, int16_t>) {
             return "int16_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, int8_t>) {
             return "int8_t";
-
         } else if constexpr (std::is_same_v<std::decay_t<U>, double>) {
             return "double";
-
+        } else if constexpr (std::is_same_v<std::decay_t<U>, float>) {
+            return "float";
         } else {
             static_assert(dependent_false_v<T>, "Unknown type, cannot get type_name");
         }
