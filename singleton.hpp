@@ -37,11 +37,11 @@
 using state_value_variant = std::variant<int8_t, uint8_t, int32_t, uint32_t, int64_t, uint64_t, int128_t, uint128_t,
     bool, std::vector<int64_t>, eosio::name, std::string, eosio::time_point_sec, eosio::asset, eosio::extended_asset>;
 
-struct blabla {
+struct SingletonStruct {
     std::map<std::string, state_value_variant> data = {};
     uint8_t                                    serial;
 
-    EOSLIB_SERIALIZE(blabla, (data)(serial))
+    EOSLIB_SERIALIZE(SingletonStruct, (data)(serial))
 };
 
 template <typename Table, typename Struct>
@@ -64,7 +64,7 @@ struct Singleton {
 
   protected:
     void save() {
-        // optimistic locking
+        // optimistic locking, prevents 2 different instances of overwriting each other's changes
         auto current_table = Table{contract, scope.value};
         auto current       = current_table.get_or_default();
         check(current.serial == row.serial, "Table has been modified by another instance");
@@ -88,10 +88,10 @@ struct Singleton {
     template <typename T>
     T get(const std::string &key) const {
         const auto search = row.data.find(key);
-        if (search == row.data.end()) {
-            return T{};
-        } else {
+        if (search != row.data.end()) {
             return std::get<T>(search->second);
+        } else {
+            return T{};
         }
     }
 
