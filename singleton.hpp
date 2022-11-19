@@ -34,6 +34,18 @@
         unset(#name);                                                                                                  \
     }
 
+#define SINGLETON(table_name, contract_name, ...)                                                                      \
+    struct table_name##_struct;                                                                                        \
+    using table_name##_singleton = eosio::singleton<#table_name##_n, table_name##_struct>;                             \
+    struct [[eosio::table(#table_name), eosio::contract(#contract_name)]] table_name##_struct                          \
+        : public SingletonStruct {                                                                                     \
+        EOSLIB_SERIALIZE_DERIVED(table_name##_struct, SingletonStruct, (data)(serial));                                \
+    };                                                                                                                 \
+    struct table_name : Singleton<table_name##_singleton, table_name##_struct> {                                       \
+        using Singleton::Singleton;                                                                                    \
+        __VA_ARGS__                                                                                                    \
+    };
+
 using state_value_variant = std::variant<int8_t, uint8_t, int32_t, uint32_t, int64_t, uint64_t, int128_t, uint128_t,
     bool, std::vector<int64_t>, eosio::name, std::string, eosio::time_point_sec, eosio::asset, eosio::extended_asset>;
 
