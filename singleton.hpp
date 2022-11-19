@@ -1,0 +1,107 @@
+#include <eosio/eosio.hpp>
+#include <eosio/multi_index.hpp>
+#include <eosio/permission.hpp>
+#include <eosio/singleton.hpp>
+#include <eosio/time.hpp>
+/**
+ * simple getter/setter
+ **/
+#define PROPERTY(type, name)                                                                                           \
+    type get_##name() const {                                                                                          \
+        return get<type>(#name);                                                                                       \
+    }                                                                                                                  \
+    auto set_##name(const type &value) {                                                                               \
+        return set(#name, value);                                                                                      \
+    }
+
+/**
+ * A slightly more complicated getter/setter macro that allows optional values.
+ * If value is not set, it returns a null optional. To unset a previously set
+ * value, it has an unset function.
+ * Since our variant can only hold certain number types, we sometimes need to
+ * convert our desired type to a storage_type. Before storing, it will convert
+ * the value to the storage_type and before returning, the getter will
+ * automatically convert back to type.
+ **/
+#define PROPERTY_OPTIONAL_TYPECASTING(type, storage_type, name)                                                        \
+    std::optional<type> maybe_get_##name() const {                                                                     \
+        return get_maybe<storage_type>(#name);                                                                         \
+    }                                                                                                                  \
+    void set_##name(const type &value) {                                                                               \
+        set(#name, static_cast<storage_type>(value));                                                                  \
+    }                                                                                                                  \
+    void unset_##name() {                                                                                              \
+        unset(#name);                                                                                                  \
+    }
+
+using state_value_variant = std::variant<int8_t, uint8_t, int32_t, uint32_t, int64_t, uint64_t, int128_t, uint128_t,
+    bool, std::vector<int64_t>, eosio::name, std::string, eosio::time_point_sec, eosio::asset, eosio::extended_asset>;
+
+struct blabla {
+    std::map<std::string, state_value_variant> data = {};
+    uint8_t                                    serial;
+
+    EOSLIB_SERIALIZE(blabla, (data)(serial))
+};
+
+template <typename Table, typename Struct>
+struct Singleton {
+  public:
+    eosio::name contract;
+    eosio::name scope;
+    Table       table;
+    Struct      row;
+    bool        dirty = false;
+
+    explicit Singleton(const eosio::name &c, const eosio::name &s)
+        : contract(c), scope(s), table(c, s.value), row(table.get_or_default()) {}
+
+    ~Singleton() {
+        if (dirty) {
+            save();
+        }
+    }
+
+  protected:
+    void save() {
+        // optimistic locking
+        auto current_table = Table{contract, scope.value};
+        auto current       = current_table.get_or_default();
+        check(current.serial == row.serial, "Table has been modified by another instance");
+        row.serial++;
+
+        table.set(row, contract);
+    };
+
+    auto set(const std::string &key, const state_value_variant &value) {
+        dirty = true;
+        return row.data.insert_or_assign(key, value);
+    }
+
+    void unset(const std::string &key) {
+        dirty             = true;
+        const auto search = row.data.find(key);
+        check(search != row.data.end(), "Cannot unset %s, no value set", key);
+        row.data.erase(key);
+    }
+
+    template <typename T>
+    T get(const std::string &key) const {
+        const auto search = row.data.find(key);
+        if (search == row.data.end()) {
+            return T{};
+        } else {
+            return std::get<T>(search->second);
+        }
+    }
+
+    template <typename T>
+    std::optional<T> get_maybe(const std::string &key) const {
+        const auto search = row.data.find(key);
+        if (search != row.data.end()) {
+            return std::get<T>(search->second);
+        } else {
+            return {};
+        }
+    }
+};
