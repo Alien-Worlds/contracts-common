@@ -3,6 +3,11 @@
 #include <eosio/permission.hpp>
 #include <eosio/singleton.hpp>
 #include <eosio/time.hpp>
+
+#ifdef IS_DEV
+#define USE_OPTIMISTIC_LOCKING
+#endif
+
 /**
  * simple getter/setter
  **/
@@ -34,7 +39,7 @@
         unset(#name);                                                                                                  \
     }
 
-#ifdef IS_DEV
+#ifdef USE_OPTIMISTIC_LOCKING
 #define SINGLETON(table_name, contract_name, ...)                                                                      \
     struct table_name##_struct;                                                                                        \
     using table_name##_singleton = eosio::singleton<#table_name##_n, table_name##_struct>;                             \
@@ -66,7 +71,7 @@ using state_value_variant = std::variant<int8_t, uint8_t, int32_t, uint32_t, int
 
 struct SingletonStruct {
     std::map<std::string, state_value_variant> data = {};
-#ifdef IS_DEV
+#ifdef USE_OPTIMISTIC_LOCKING
     uint8_t serial;
 
     EOSLIB_SERIALIZE(SingletonStruct, (data)(serial))
@@ -96,12 +101,13 @@ struct Singleton {
 
   protected:
     void save() {
+#ifdef USE_OPTIMISTIC_LOCKING
         // optimistic locking, prevents 2 different instances of overwriting each other's changes
         auto current_table = Table{contract, scope.value};
         auto current       = current_table.get_or_default();
         check(current.serial == row.serial, "Table has been modified by another instance");
         row.serial++;
-
+#endif
         table.set(row, contract);
     };
 
