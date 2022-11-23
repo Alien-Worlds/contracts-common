@@ -34,6 +34,7 @@
         unset(#name);                                                                                                  \
     }
 
+#ifdef IS_DEV
 #define SINGLETON(table_name, contract_name, ...)                                                                      \
     struct table_name##_struct;                                                                                        \
     using table_name##_singleton = eosio::singleton<#table_name##_n, table_name##_struct>;                             \
@@ -45,26 +46,45 @@
         using Singleton::Singleton;                                                                                    \
         __VA_ARGS__                                                                                                    \
     };
+#else
+#define SINGLETON(table_name, contract_name, ...)                                                                      \
+    struct table_name##_struct;                                                                                        \
+    using table_name##_singleton = eosio::singleton<#table_name##_n, table_name##_struct>;                             \
+    struct [[eosio::table(#table_name), eosio::contract(#contract_name)]] table_name##_struct                          \
+        : public SingletonStruct {                                                                                     \
+        EOSLIB_SERIALIZE_DERIVED(table_name##_struct, SingletonStruct, (data));                                        \
+    };                                                                                                                 \
+    struct table_name : Singleton<table_name##_singleton, table_name##_struct> {                                       \
+        using Singleton::Singleton;                                                                                    \
+        __VA_ARGS__                                                                                                    \
+    };
+
+#endif
 
 using state_value_variant = std::variant<int8_t, uint8_t, int32_t, uint32_t, int64_t, uint64_t, int128_t, uint128_t,
     bool, std::vector<int64_t>, eosio::name, std::string, eosio::time_point_sec, eosio::asset, eosio::extended_asset>;
 
 struct SingletonStruct {
     std::map<std::string, state_value_variant> data = {};
-    uint8_t                                    serial;
+#ifdef IS_DEV
+    uint8_t serial;
 
     EOSLIB_SERIALIZE(SingletonStruct, (data)(serial))
+#else
+    EOSLIB_SERIALIZE(SingletonStruct, (data))
+#endif
 };
 
 template <typename Table, typename Struct>
 struct Singleton {
-  public:
+  private:
     eosio::name contract;
     eosio::name scope;
     Table       table;
     Struct      row;
     bool        dirty = false;
 
+  public:
     explicit Singleton(const eosio::name &c, const eosio::name &s)
         : contract(c), scope(s), table(c, s.value), row(table.get_or_default()) {}
 
