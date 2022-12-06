@@ -45,3 +45,25 @@ inline char *fmt(const std::string_view format, Args const &...args) {
     snprintf(buf, sizeof(buf), format.data(), toString(args).c_str()...);
     return buf;
 }
+
+/**
+ * @brief Splits a string into a vector of tokens delimited by a a delimiter string.
+ *
+ * @param s The string to split
+ * @param delimiter The delimiter string
+ * @param pos_start (optional, default 0) The starting position of the string to split
+ *
+ * @return std::vector<std::string> The vector of tokens
+ */
+std::vector<std::string> split(const std::string &s, const std::string_view delimiter, std::size_t pos_start = 0) {
+    std::size_t              pos_end, delim_len = delimiter.length();
+    std::vector<std::string> result;
+
+    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+        result.emplace_back(s.substr(pos_start, pos_end - pos_start));
+        pos_start = pos_end + delim_len;
+    }
+
+    result.emplace_back(s.substr(pos_start));
+    return result;
+}
