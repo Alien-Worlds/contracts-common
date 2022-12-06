@@ -49,21 +49,21 @@ inline char *fmt(const std::string_view format, Args const &...args) {
 /**
  * @brief Splits a string into a vector of tokens delimited by a a delimiter string.
  *
- * @param string to be split
- * @param delimiter
- * @return vector<string>
+ * @param s The string to split
+ * @param delimiter The delimiter string
+ * @param pos_start (optional, default 0) The starting position of the string to split
+ *
+ * @return std::vector<std::string> The vector of tokens
  */
-vector<string> split(string s, string delimiter) {
-    size_t         pos_start = 0, pos_end, delim_len = delimiter.length();
-    vector<string> result;
+vector<std::string> split(const std::string &s, const std::string_view delimiter, std::size_t pos_start = 0) {
+    std::size_t              pos_end, delim_len = delimiter.length();
+    std::vector<std::string> result;
 
-    while ((pos_end = s.find(delimiter, pos_start)) != string::npos) {
-        const auto item = s.substr(pos_start, pos_end - pos_start);
-        pos_start       = pos_end + delim_len;
-        result.push_back(item);
+    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+        result.emplace_back(s.substr(pos_start, pos_end - pos_start));
+        pos_start = pos_end + delim_len;
     }
 
-    // push the remainder to the result
-    result.push_back(s.substr(pos_start));
+    result.emplace_back(s.substr(pos_start));
     return result;
 }
