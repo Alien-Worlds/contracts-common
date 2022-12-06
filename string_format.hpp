@@ -55,7 +55,7 @@ inline char *fmt(const std::string_view format, Args const &...args) {
  *
  * @return std::vector<std::string> The vector of tokens
  */
-vector<std::string> split(const std::string &s, const std::string_view delimiter, std::size_t pos_start = 0) {
+std::vector<std::string> split(const std::string &s, const std::string_view delimiter, std::size_t pos_start = 0) {
     std::size_t              pos_end, delim_len = delimiter.length();
     std::vector<std::string> result;
 
