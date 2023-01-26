@@ -79,12 +79,6 @@ void check(const bool pred, const std::string_view format, Args const &...args) 
  * @return true - if a new table entry was created
  * @return false - if an existing table entry was updated
  */
-template <typename Table, typename Function>
-inline bool upsert(Table &table, const uint64_t pk, const eosio::name payer, const Function &updater) {
-    const auto itr = table.find(pk);
-    return upsert(table, itr, payer, updater);
-}
-
 template <typename Table, typename Iterator, typename Function>
 inline bool upsert(Table &table, Iterator &itr, const eosio::name payer, const Function &updater) {
     if (itr == table.end()) {
@@ -94,6 +88,11 @@ inline bool upsert(Table &table, Iterator &itr, const eosio::name payer, const F
         table.modify(itr, payer, updater);
         return false;
     }
+}
+template <typename Table, typename Function>
+inline bool upsert(Table &table, const uint64_t pk, const eosio::name payer, const Function &updater) {
+    auto itr = table.find(pk);
+    return upsert(table, itr, payer, updater);
 }
 
 inline time_point_sec now() {
