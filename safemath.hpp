@@ -177,8 +177,8 @@ class S {
             ::check(!isinf(n), "infinity");
             ::check(!isnan(n), "NaN");
         } else if constexpr (std::is_unsigned_v<T>) {
-            ::check(
-                n >= a.n, "invalid unsigned subtraction: %s %s - %s result would be negative", type_name<T>(), n, a);
+            ::check(n >= a.n, "invalid unsigned subtraction: %s %s - %s result would be negative", type_name<T>(),
+                *this, a);
             n -= a.n;
         } else {
             ::check(a.n <= 0 || n >= min() + a.n, "signed subtraction underflow");
@@ -238,7 +238,7 @@ class S {
             ::check(!isinf(n), "infinity");
             ::check(!isnan(n), "NaN");
         } else if constexpr (std::is_unsigned_v<T>) {
-            ::check(n <= max() / a.n, "unsigned multiplication overflow");
+            ::check(n == 0 || n <= max() / a.n, "unsigned multiplication overflow");
             n *= a.n;
         } else {
             if (n > 0) {
