@@ -76,6 +76,7 @@ struct Singleton {
         table.set(row, contract);
     };
 
+  public:
     auto set(const std::string &key, const state_value_variant &value) {
         dirty = true;
         return row.data.insert_or_assign(key, value);
