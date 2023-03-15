@@ -1,3 +1,4 @@
+#include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
 #include <eosio/multi_index.hpp>
 #include <eosio/permission.hpp>
