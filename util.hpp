@@ -98,3 +98,9 @@ inline bool upsert(Table &table, const uint64_t pk, const eosio::name payer, con
 inline time_point_sec now() {
     return time_point_sec(current_time_point());
 }
+
+// explicit no_require_auth() to be able to explicitly mark a function as not requiring auth for auditing and code
+// clarity purposes.
+#define no_require_auth()                                                                                              \
+    do {                                                                                                               \
+    } while (0)
