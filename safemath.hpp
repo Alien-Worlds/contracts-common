@@ -23,6 +23,10 @@ class S {
     T n;
 
   public:
+    S() : n(T{}) {
+        static_assert(std::is_unsigned_v<T> || std::is_signed_v<T>, "wrong type, only for numbers");
+    };
+
     explicit constexpr S(T a) : n(a) {
         static_assert(std::is_unsigned_v<T> || std::is_signed_v<T>, "wrong type, only for numbers");
     };
