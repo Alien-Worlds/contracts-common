@@ -242,7 +242,7 @@ class S {
             ::check(!isinf(n), "infinity");
             ::check(!isnan(n), "NaN");
         } else if constexpr (std::is_unsigned_v<T>) {
-            ::check(n == 0 || n <= max() / a.n, "unsigned multiplication overflow");
+            ::check(a.n == 0 || n <= max() / a.n, "unsigned multiplication overflow");
             n *= a.n;
         } else {
             if (n > 0) {
