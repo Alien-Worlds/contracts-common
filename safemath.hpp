@@ -249,7 +249,7 @@ class S {
                 if (a.n > 0) {
                     ::check(n <= max() / a.n, "signed multiplication overflow");
                 } else {
-                    ::check(n == 0 || a.n >= min() / n, "signed multiplication underflow");
+                    ::check(a.n >= min() / n, "signed multiplication underflow");
                 }
             } else {
                 if (a.n > 0) {
